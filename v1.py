@@ -64,6 +64,9 @@ for doc_id, doc in corpus.id2doc.items():
 # Sauvegarder le corpus
 corpus.save('corpus.pkl')
 print("Corpus sauvegardé dans 'corpus.pkl'")
+# Sauvegarder le corpus dans un fichier CSV
+corpus.export_to_csv('corpus.csv')
+print("Corpus exporté dans 'corpus.csv'")
 
 # Charger le corpus
 try:
@@ -78,3 +81,4 @@ try:
         print(f"ID: {doc_id}, Type: {doc.getType()}, Titre: {doc.titre}")
 except Exception as e:
     print(f"Erreur lors du chargement du corpus: {e}")
+

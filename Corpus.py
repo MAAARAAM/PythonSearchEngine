@@ -74,6 +74,25 @@ class Corpus:
     def save(self, filepath):
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
+        
+    def export_to_csv(self, filepath):
+        data = [
+            {
+                'Titre': doc.titre,
+                'Auteur': doc.auteur,
+                'Date': doc.date.strftime("%Y-%m-%d") if doc.date else "Inconnue",
+                'URL': doc.url,
+                'Texte': doc.texte[:100]  # Limitez le texte pour éviter des fichiers trop lourds
+            }
+            for doc in self.id2doc.values()
+        ]
+        try:
+            df = pd.DataFrame(data)
+            df.to_csv(filepath, index=False)
+            print(f"Corpus exporté avec succès dans le fichier : {filepath}")
+        except Exception as e:
+            print(f"Erreur lors de l'exportation vers CSV : {e}")
+
 
     @staticmethod
     def load(filepath):
