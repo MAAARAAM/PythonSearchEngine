@@ -4,7 +4,7 @@ from Document import NewsAPIDocument, GuardianDocument  # Importer les classes f
 
 corpus = Corpus("MonCorpus")
 
-# Example usage : 
+# Example usage :
 newsapi_data = corpus.fetch_newsapi_data('deep learning', page_size=100)
 newsapi_data['type'] = 'newsapi'  # Ajouter une colonne 'type' pour NewsAPI
 
