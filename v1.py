@@ -29,7 +29,6 @@ for index, row in combined_data.iterrows():
             titre=row.get('Title', 'No title available'),
             auteur=row.get('Author', 'No author available'),
             date=row.get('PublishedAt', 'No date available'),
-            url=row.get('URL', 'No URL available'),
             texte=row.get('Content', 'No content available'),
             description=row.get('Description', 'No description available')
         )
@@ -38,7 +37,6 @@ for index, row in combined_data.iterrows():
             titre=row.get('Title', 'No title available'),
             auteur=row.get('Author', 'No author available'),
             date=row.get('PublishedAt', 'No date available'),
-            url=row.get('URL', 'No URL available'),
             texte=row.get('Content', 'No content available'),
             description=row.get('Description', 'No description available')
         )
@@ -65,7 +63,7 @@ for doc_id, doc in corpus.id2doc.items():
 corpus.save('corpus.pkl')
 print("Corpus sauvegardé dans 'corpus.pkl'")
 # Sauvegarder le corpus dans un fichier CSV
-corpus.export_to_csv('corpus.csv')
+corpus.export_to_json('corpus.json')
 print("Corpus exporté dans 'corpus.csv'")
 
 # Charger le corpus
@@ -81,7 +79,7 @@ try:
         print(f"Titre: {doc.titre}")
         print(f"Auteur: {doc.auteur}")
         print(f"Date: {doc.date}")
-        print(f"Contenu: {doc.texte[:300]}...")  # Afficher les 300 premiers caractères du contenu
+        print(f"Contenu: {doc.texte[:1000]}...")  # Afficher les 300 premiers caractères du contenu
         print("-" * 50)
 
     # Afficher les attributs de l'objet chargé (si nécessaire)

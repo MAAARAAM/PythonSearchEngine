@@ -75,23 +75,25 @@ class Corpus:
         with open(filepath, 'wb') as f:
             pickle.dump(self, f)
         
-    def export_to_csv(self, filepath):
+    def export_to_json(self, filepath):
+        # Filtrer les documents pour exclure ceux avec des données non valides
         data = [
             {
                 'Titre': doc.titre,
                 'Auteur': doc.auteur,
                 'Date': doc.date.strftime("%Y-%m-%d") if doc.date else "Inconnue",
-                'URL': doc.url,
-                'Texte': doc.texte[:100]  # Limitez le texte pour éviter des fichiers trop lourds
+                'Texte': doc.texte
             }
             for doc in self.id2doc.values()
+            if doc.titre != "[Removed]" and doc.auteur is not None
         ]
         try:
-            df = pd.DataFrame(data)
-            df.to_csv(filepath, index=False)
+            with open(filepath, 'w', encoding='utf-8') as f:
+                import json
+                json.dump(data, f, ensure_ascii=False, indent=4)
             print(f"Corpus exporté avec succès dans le fichier : {filepath}")
         except Exception as e:
-            print(f"Erreur lors de l'exportation vers CSV : {e}")
+            print(f"Erreur lors de l'exportation vers JSON : {e}")
 
 
     @staticmethod

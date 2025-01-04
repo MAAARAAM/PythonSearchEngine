@@ -2,10 +2,9 @@ from dateutil import parser
 from datetime import datetime
 
 class Document:
-    def __init__(self, titre, auteur, date, url, texte, doc_type="generic"):
+    def __init__(self, titre, auteur, date, texte, doc_type="generic"):
         self.titre = titre
         self.auteur = auteur
-        self.url = url
         self.texte = texte
         self.type = doc_type
         try:
@@ -21,7 +20,6 @@ class Document:
         print(f'Titre : {self.titre}')
         print(f'Auteur : {self.auteur}')
         print(f'Date : {self.date.strftime("%Y-%m-%d") if self.date else "Inconnue"}')
-        print(f'URL : {self.url}')
         print(f'Texte : {self.texte[:100]}...')  # Afficher les 100 premiers caractères du texte
 
     def __str__(self):
@@ -31,16 +29,16 @@ class Document:
         return self.type
 
 class NewsAPIDocument(Document):
-    def __init__(self, titre, auteur, date, url, texte, description):
-        super().__init__(titre, auteur, date, url, texte, doc_type="newsapi")
+    def __init__(self, titre, auteur, date, texte, description):
+        super().__init__(titre, auteur, date, texte, doc_type="newsapi")
         self.description = description
 
     def __str__(self):
         return f"NewsAPIDocument(titre={self.titre}, auteur={self.auteur}, date={self.date}, description={self.description})"
 
 class GuardianDocument(Document):
-    def __init__(self, titre, auteur, date, url, texte, description):
-        super().__init__(titre, auteur, date, url, texte, doc_type="guardian")
+    def __init__(self, titre, auteur, date, texte, description):
+        super().__init__(titre, auteur, date, texte, doc_type="guardian")
         self.description = description
 
     def __str__(self):
