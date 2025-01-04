@@ -53,18 +53,12 @@ corpus.afficher_documents_tries_par_date(5)
 print("\nDocuments triés par titre:")
 corpus.afficher_documents_tries_par_titre(5)
 
-# Afficher la liste des articles avec leur source
-print("\nListe des articles avec leur source:")
-for doc_id, doc in corpus.id2doc.items():
-    print(f"ID: {doc_id}, Type: {doc.getType()}, Titre: {doc.titre}")
-
-
 # Sauvegarder le corpus
 corpus.save('corpus.pkl')
 print("Corpus sauvegardé dans 'corpus.pkl'")
 # Sauvegarder le corpus dans un fichier CSV
 corpus.export_to_json('corpus.json')
-print("Corpus exporté dans 'corpus.csv'")
+print("Corpus exporté dans 'corpus.json'")
 
 # Charger le corpus
 try:
@@ -72,22 +66,43 @@ try:
     loaded_corpus = Corpus.load('corpus.pkl')
     print("\nCorpus chargé depuis le fichier:")
 
-    # Afficher les documents du corpus chargé
-    print("\nDocuments du corpus chargé:")
-    for doc_id, doc in loaded_corpus.id2doc.items():
-        print(f"ID: {doc_id}")
-        print(f"Titre: {doc.titre}")
-        print(f"Auteur: {doc.auteur}")
-        print(f"Date: {doc.date}")
-        print(f"Contenu: {doc.texte[:1000]}...")  # Afficher les 300 premiers caractères du contenu
-        print("-" * 50)
+    # Obtenir le nombre total de documents
+    total_docs = len(loaded_corpus.id2doc)
+    print(f"Nombre total de documents : {total_docs}")
 
-    # Afficher les attributs de l'objet chargé (si nécessaire)
-    print("\nChamps de l'objet chargé depuis 'corpus.pkl':")
-    for attribute in dir(loaded_corpus):
-        if not attribute.startswith('__'):  # Ignorer les attributs spéciaux (doubles underscores)
-            print(attribute)
+    # Vérifier s'il y a assez de documents pour appliquer cette logique
+    if total_docs <= 20:
+        print("\nTous les documents du corpus chargé :")
+        for doc_id, doc in loaded_corpus.id2doc.items():
+            print(f"ID: {doc_id}")
+            print(f"Source: {doc.getType()}")
+            print(f"Titre: {doc.titre}")
+            print(f"Auteur: {doc.auteur}")
+            print(f"Date: {doc.date}")
+            print(f"Contenu: {doc.texte[:100]}...")  # Afficher les 100 premiers caractères du contenu
+            print("-" * 50)
+    else:
+        for doc_id, doc in list(loaded_corpus.id2doc.items())[:10]:
+            print(f"ID: {doc_id}")
+            print(f"Source: {doc.getType()}")
+            print(f"Titre: {doc.titre}")
+            print(f"Auteur: {doc.auteur}")
+            print(f"Date: {doc.date}")
+            print(f"Contenu: {doc.texte[:100]}...")
+            print("-" * 50)
+
+        print("...\n(Plusieurs documents intermédiaires non affichés)\n...")
+
+        for doc_id, doc in list(loaded_corpus.id2doc.items())[-10:]:
+            print(f"ID: {doc_id}")
+            print(f"Source: {doc.getType()}")
+            print(f"Titre: {doc.titre}")
+            print(f"Auteur: {doc.auteur}")
+            print(f"Date: {doc.date}")
+            print(f"Contenu: {doc.texte[:100]}...")
+            print("-" * 50)
 
 except Exception as e:
     print(f"Erreur lors du chargement du corpus: {e}")
+
 
