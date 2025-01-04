@@ -1,8 +1,5 @@
 import pandas as pd
-import re
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud
-from textblob import TextBlob
 from nltk.corpus import stopwords
 from Corpus import Corpus
 from Document import NewsAPIDocument, GuardianDocument
