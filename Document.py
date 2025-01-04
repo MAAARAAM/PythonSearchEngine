@@ -21,6 +21,7 @@ class Document:
         print(f'Auteur : {self.auteur}')
         print(f'Date : {self.date.strftime("%Y-%m-%d") if self.date else "Inconnue"}')
         print(f'Texte : {self.texte[:100]}...')  # Afficher les 100 premiers caractères du texte
+        print("-" * 50)
 
     def __str__(self):
         return f"Document(titre={self.titre})"

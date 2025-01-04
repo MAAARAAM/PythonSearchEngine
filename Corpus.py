@@ -59,9 +59,10 @@ class Corpus:
             return pd.DataFrame()
 
     def afficher_documents_tries_par_date(self, n):
-        sorted_docs = sorted(self.id2doc.values(), key=lambda x: x.date or datetime.max)[:n]
+        sorted_docs = sorted(self.id2doc.values(), key=lambda x: x.date or datetime.min, reverse=True)[:n]
         for doc in sorted_docs:
             doc.afficher_informations()
+
 
     def afficher_documents_tries_par_titre(self, n):
         sorted_docs = sorted(self.id2doc.values(), key=lambda x: x.titre)[:n]
