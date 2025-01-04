@@ -4,7 +4,7 @@ from Document import NewsAPIDocument, GuardianDocument  # Importer les classes f
 
 corpus = Corpus("MonCorpus")
 
-# Example usage
+# Example usage :
 newsapi_data = corpus.fetch_newsapi_data('deep learning', page_size=100)
 newsapi_data['type'] = 'newsapi'  # Ajouter une colonne 'type' pour NewsAPI
 
@@ -73,12 +73,23 @@ try:
     print("Tentative de chargement du corpus...")
     loaded_corpus = Corpus.load('corpus.pkl')
     print("\nCorpus chargé depuis le fichier:")
-    print(loaded_corpus)
 
     # Afficher les documents du corpus chargé
     print("\nDocuments du corpus chargé:")
     for doc_id, doc in loaded_corpus.id2doc.items():
-        print(f"ID: {doc_id}, Type: {doc.getType()}, Titre: {doc.titre}")
+        print(f"ID: {doc_id}")
+        print(f"Titre: {doc.titre}")
+        print(f"Auteur: {doc.auteur}")
+        print(f"Date: {doc.date}")
+        print(f"Contenu: {doc.texte[:300]}...")  # Afficher les 300 premiers caractères du contenu
+        print("-" * 50)
+
+    # Afficher les attributs de l'objet chargé (si nécessaire)
+    print("\nChamps de l'objet chargé depuis 'corpus.pkl':")
+    for attribute in dir(loaded_corpus):
+        if not attribute.startswith('__'):  # Ignorer les attributs spéciaux (doubles underscores)
+            print(attribute)
+
 except Exception as e:
     print(f"Erreur lors du chargement du corpus: {e}")
 
