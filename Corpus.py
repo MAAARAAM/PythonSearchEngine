@@ -128,10 +128,26 @@ class Corpus_v2(Corpus):
     def concorde(self, expression, context_size=5):
         if not self.textes_concat:
             self.textes_concat = " ".join([doc.texte for doc in self.id2doc.values()])
-        pattern = re.compile(r"(\S*\s){0," + str(context_size) + r"}" + re.escape(expression) + r"(\s\S*){0," + str(context_size) + r"}", re.IGNORECASE)
-        concordances = [match.group(0) for match in pattern.finditer(self.textes_concat)]
-        df_concordance = pd.DataFrame(concordances, columns=["Concordance"])
-        return df_concordance
+        
+        # Expression régulière pour capturer le contexte gauche, le motif, et le contexte droit
+        pattern = re.compile(
+            r"(\S+\s){0," + str(context_size) + r"}(\b" + re.escape(expression) + r"\b)(\s\S+){0," + str(context_size) + r"}",
+            re.IGNORECASE
+        )
+        
+        results = []
+        for match in pattern.finditer(self.textes_concat):
+            contexte_gauche = match.group(1) or ""  # Contexte gauche (peut être vide)
+            motif = match.group(2) or ""  # Motif trouvé
+            contexte_droit = match.group(3) or ""  # Contexte droit (peut être vide)
+            results.append({
+                "Contexte gauche": contexte_gauche.strip(),
+                "Motif trouvé": motif.strip(),
+                "Contexte droit": contexte_droit.strip(),
+            })
+        
+        return pd.DataFrame(results)
+
 
     # Partie 2 : Fonction de nettoyage de texte
     def nettoyer_texte(self, texte):

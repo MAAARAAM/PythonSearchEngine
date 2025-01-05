@@ -59,10 +59,16 @@ corpus_v2.analyse_sentimentale()
 # Initialiser le moteur de recherche avec le corpus
 search_engine = SearchEngine(corpus_v2)
 
-# Exemple de recherche
-query = input("Entrez votre requête de recherche : ")
-resultats = search_engine.search(query)
+query = input("\nEntrez votre requête de recherche : ").strip()
 
-# Afficher les résultats
-print("\nRésultats de la recherche :")
-print(resultats)
+if not query:
+    print("La requête est vide. Veuillez entrer un ou plusieurs mots-clés.")
+else:
+    resultats = search_engine.search(query)
+
+    if resultats.empty:
+        print(f"Aucun résultat trouvé pour la requête : '{query}'.")
+    else:
+        print("\nRésultats de la recherche :")
+        print(resultats)
+
