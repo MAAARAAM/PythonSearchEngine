@@ -87,8 +87,27 @@ def print_document_details(doc_id, doc):
     print(Fore.GREEN + f"Titre: {doc.titre}")
     print(Fore.LIGHTWHITE_EX + f"Auteur: {doc.auteur}")
     print(Fore.WHITE + f"Date: {doc.date}")
-    print(Fore.WHITE + f"Contenu: {doc.texte[:100]}...")
+    print(Fore.WHITE + f"Contenu: {doc.texte[:1000]}...")
     print(Fore.WHITE + "-" * 50)
+
+def get_authors(corpus):
+    """
+    Extract all unique authors from the corpus.
+
+    Args:
+        corpus (Corpus): The loaded corpus object.
+
+    Returns:
+        dict: A dictionary mapping author names to their documents.
+    """
+    authors = {}
+    for doc_id, doc in corpus.id2doc.items():
+        auteur = doc.auteur
+        if auteur not in authors:
+            authors[auteur] = []
+        authors[auteur].append(doc)
+    return authors
+
 
 def interactive_menu(loaded_corpus):
     """
@@ -97,14 +116,17 @@ def interactive_menu(loaded_corpus):
     Args:
         loaded_corpus (Corpus): The loaded corpus object.
     """
+    authors = get_authors(loaded_corpus)  # Obtenez les auteurs du corpus
+
     while True:
         print(Fore.MAGENTA + "\nMenu :")
         print(Fore.CYAN + "1. Afficher les documents triés par date")
         print(Fore.CYAN + "2. Afficher les documents triés par titre")
         print(Fore.CYAN + "3. Afficher les documents de NewsAPI")
         print(Fore.CYAN + "4. Afficher les documents de The Guardian")
-        print(Fore.CYAN + "5. Quitter")
-        choix = input(Fore.GREEN + "Votre choix (1/2/3/4/5) : ")
+        print(Fore.CYAN + "5. Afficher les documents par auteur")  # Nouvelle option
+        print(Fore.CYAN + "6. Quitter")
+        choix = input(Fore.GREEN + "Votre choix (1/2/3/4/5/6) : ")
 
         if choix == '1':
             print(Fore.YELLOW + "\nDocuments triés par date :")
@@ -123,10 +145,25 @@ def interactive_menu(loaded_corpus):
                 if doc.getType() == 'guardian':
                     doc.afficher_informations()
         elif choix == '5':
+            print(Fore.YELLOW + "\nListe des auteurs :")
+            for idx, auteur in enumerate(authors.keys(), start=1):
+                print(Fore.CYAN + f"{idx}. {auteur}")
+
+            auteur_choisi = input(Fore.GREEN + "Choisissez un auteur (numéro) : ")
+            try:
+                auteur_choisi = int(auteur_choisi) - 1
+                auteur_nom = list(authors.keys())[auteur_choisi]
+                print(Fore.YELLOW + f"\nDocuments de {auteur_nom} :")
+                for doc in authors[auteur_nom]:
+                    doc.afficher_informations()
+            except (ValueError, IndexError):
+                print(Fore.RED + "Choix invalide, veuillez réessayer.")
+        elif choix == '6':
             print(Fore.RED + "Au revoir !")
             break
         else:
             print(Fore.RED + "Choix invalide, veuillez réessayer.")
+
 
 if __name__ == "__main__":
     main()
