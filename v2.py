@@ -5,6 +5,7 @@ from Corpus import Corpus
 from Document import NewsAPIDocument, GuardianDocument
 import nltk
 from Corpus import Corpus_v2
+from SearchEngine import SearchEngine
 
 # Assurez-vous d'avoir téléchargé les stopwords de nltk
 nltk.download('stopwords')
@@ -54,3 +55,14 @@ corpus_v2.nuage_de_mots()
 
 # Analyse sentimentale
 corpus_v2.analyse_sentimentale()
+
+# Initialiser le moteur de recherche avec le corpus
+search_engine = SearchEngine(corpus_v2)
+
+# Exemple de recherche
+query = input("Entrez votre requête de recherche : ")
+resultats = search_engine.search(query)
+
+# Afficher les résultats
+print("\nRésultats de la recherche :")
+print(resultats)

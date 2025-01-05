@@ -4,44 +4,59 @@ from scipy.sparse import csr_matrix
 from numpy.linalg import norm
 
 class SearchEngine:
+
     def __init__(self, corpus):
-        self.id2doc = corpus.id2doc  # Corpus contenant les documents
-        self.ndoc = len(self.id2doc)
+        self.corpus = corpus  # Initialiser le corpus
+        self.vocab = {}
+        self.total_occurrences = {}
+        self.doc_count = {}
+        self.ndoc = len(self.corpus.id2doc)
+
+        # Construire le vocabulaire et les matrices
         self.construire_vocab()
         self.construire_matrice_TF()
         self.construire_matrice_TFxIDF()
 
     # Méthode pour construire le vocabulaire
     def construire_vocab(self):
-        print("Construction du vocabulaire...")
-        mots = set()
-        for doc in self.id2doc.values():
-            mots.update(set(doc.texte.lower().split()))  # Séparation par mots et suppression des doublons
-        mots = sorted(mots)  # Tri des mots par ordre alphabétique
-        self.vocab = {mot: {"id": i, "total_occurrences": 0, "doc_count": 0} for i, mot in enumerate(mots)}
-        print(f"Vocabulaire construit : {len(self.vocab)} mots uniques")
-        print("Vocabulaire terminé.\n")
+        vocab = {}
+        for doc in self.corpus.id2doc.values():
+            seen_in_doc = set()
+            for word in doc.texte.split():
+                word = word.lower().strip()
+                if word not in vocab:
+                    vocab[word] = {"id": len(vocab), "doc_count": 0, "total_occurrences": 0}
+                vocab[word]["total_occurrences"] += 1
+                if word not in seen_in_doc:
+                    seen_in_doc.add(word)
+                    vocab[word]["doc_count"] += 1
+
+        self.vocab = vocab
+
 
     # Méthode pour construire la matrice TF
+    from scipy.sparse import csr_matrix
+
     def construire_matrice_TF(self):
-        print("Construction de la matrice TF...")
         rows, cols, data = [], [], []
-        for i, doc in self.id2doc.items():
-            word_counts = {}
-            for word in doc.texte.lower().split():  # Comptage des mots dans chaque document
+        for doc_id, doc in enumerate(self.corpus.id2doc.values()):
+            for word in doc.texte.split():
+                word = word.lower().strip()  # Normalisation des mots
                 if word in self.vocab:
-                    word_counts[word] = word_counts.get(word, 0) + 1
-            for word, count in word_counts.items():
-                word_id = self.vocab[word]["id"]
-                rows.append(i - 1)  # Lignes correspondant aux documents
-                cols.append(word_id)  # Colonnes correspondant aux mots
-                data.append(count)  # Fréquence du terme
-                self.vocab[word]["total_occurrences"] += count  # Mise à jour des occurrences
-                self.vocab[word]["doc_count"] += 1  # Mise à jour des documents contenant le mot
+                    word_index = self.vocab[word]["id"]  # Obtenir l'indice du mot (entier)
+                    rows.append(doc_id)  # ID du document
+                    cols.append(word_index)  # Indice du mot (entier)
+                    data.append(1)  # Compte une occurrence
+                else:
+                    print(f"Mot hors vocabulaire ignoré : {word}")
+
+        # Vérifications avant création de la matrice
+        if any(r < 0 for r in rows) or any(c < 0 for c in cols):
+            raise ValueError("Indices négatifs détectés dans rows ou cols.")
 
         self.mat_TF = csr_matrix((data, (rows, cols)), shape=(self.ndoc, len(self.vocab)))
         print(f"Matrice TF construite. Dimensions : {self.mat_TF.shape}")
-        print(f"Exemple de valeurs TF pour le premier document : {self.mat_TF[0].toarray()}\n")
+
 
     # Méthode pour construire la matrice TFxIDF
     def construire_matrice_TFxIDF(self):
@@ -50,19 +65,19 @@ class SearchEngine:
         idf = np.log(N / (1 + np.array([self.vocab[word]["doc_count"] for word in self.vocab])))  # Calcul de l'IDF
 
         rows, cols, data = [], [], []
-        for i, doc in self.id2doc.items():
+        for doc_id, doc in self.corpus.id2doc.items():
             word_counts = {word: doc.texte.lower().split().count(word) for word in set(doc.texte.lower().split()) if word in self.vocab}
             for word, count in word_counts.items():
                 word_id = self.vocab[word]["id"]
                 tf = count
                 tf_idf = tf * idf[word_id]  # Calcul du TF-IDF
-                rows.append(i - 1)
+                rows.append(doc_id)
                 cols.append(word_id)
                 data.append(tf_idf)
 
         self.mat_TFxIDF = csr_matrix((data, (rows, cols)), shape=(self.ndoc, len(self.vocab)))
         print(f"Matrice TFxIDF construite. Dimensions : {self.mat_TFxIDF.shape}")
-        print(f"Exemple de valeurs TFxIDF pour le premier document : {self.mat_TFxIDF[0].toarray()}\n")
+
 
     # Méthode pour calculer la similarité cosinus
     def _calculer_similarite_cosinus(self, vecteur_requete):
