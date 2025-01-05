@@ -1,96 +1,102 @@
 import pandas as pd
 from Corpus import Corpus
-from Document import NewsAPIDocument, GuardianDocument  # Importer les classes filles
+from Document import NewsAPIDocument, GuardianDocument
 from colorama import init, Fore, Style
 
-# Initialiser colorama
 init(autoreset=True)
 
-corpus = Corpus("MonCorpus")
+def main():
+    """
+    Main function to demonstrate the creation and management of a corpus.
+    Includes data fetching from NewsAPI and The Guardian, saving/loading the corpus,
+    and providing an interactive menu for displaying documents.
+    """
+    corpus = Corpus("MonCorpus")
 
-# Exemple d'utilisation :
-newsapi_data = corpus.fetch_newsapi_data('deep learning', page_size=100)
-newsapi_data['type'] = 'newsapi'  # Ajouter une colonne 'type' pour NewsAPI
+    newsapi_data = corpus.fetch_newsapi_data('deep learning', page_size=100)
+    newsapi_data['type'] = 'newsapi'
 
-guardian_data = corpus.fetch_guardian_data('deep learning', page_size=100)
-guardian_data['type'] = 'guardian'  # Ajouter une colonne 'type' pour The Guardian
+    guardian_data = corpus.fetch_guardian_data('deep learning', page_size=100)
+    guardian_data['type'] = 'guardian'
 
-# Combiner les données des deux sources
-combined_data = pd.concat([newsapi_data, guardian_data], ignore_index=True)
+    combined_data = pd.concat([newsapi_data, guardian_data], ignore_index=True)
 
-# Créer des objets Document pour chaque entrée dans combined_data et les ajouter au corpus
-for index, row in combined_data.iterrows():
-    if row['type'] == 'newsapi':
-        doc = NewsAPIDocument(
-            titre=row.get('Title', 'No title available'),
-            auteur=row.get('Author', 'No author available'),
-            date=row.get('PublishedAt', 'No date available'),
-            texte=row.get('Content', 'No content available'),
-            description=row.get('Description', 'No description available')
-        )
-    elif row['type'] == 'guardian':
-        doc = GuardianDocument(
-            titre=row.get('Title', 'No title available'),
-            auteur=row.get('Author', 'No author available'),
-            date=row.get('PublishedAt', 'No date available'),
-            texte=row.get('Content', 'No content available'),
-            description=row.get('Description', 'No description available')
-        )
-    corpus.add_document(doc)
+    for index, row in combined_data.iterrows():
+        if row['type'] == 'newsapi':
+            doc = NewsAPIDocument(
+                titre=row.get('Title', 'No title available'),
+                auteur=row.get('Author', 'No author available'),
+                date=row.get('PublishedAt', 'No date available'),
+                texte=row.get('Content', 'No content available'),
+                description=row.get('Description', 'No description available')
+            )
+        elif row['type'] == 'guardian':
+            doc = GuardianDocument(
+                titre=row.get('Title', 'No title available'),
+                auteur=row.get('Author', 'No author available'),
+                date=row.get('PublishedAt', 'No date available'),
+                texte=row.get('Content', 'No content available'),
+                description=row.get('Description', 'No description available')
+            )
+        corpus.add_document(doc)
 
-# Sauvegarder le corpus
-corpus.save('corpus.pkl')
-print(Fore.GREEN + Style.BRIGHT + "Corpus sauvegardé dans 'corpus.pkl'")
+    corpus.save('corpus.pkl')
+    print(Fore.GREEN + Style.BRIGHT + "Corpus sauvegardé dans 'corpus.pkl'")
 
-# Sauvegarder le corpus dans un fichier JSON
-corpus.export_to_json('corpus.json')
-print(Fore.GREEN + "Corpus exporté dans 'corpus.json'")
+    corpus.export_to_json('corpus.json')
+    print(Fore.GREEN + "Corpus exporté dans 'corpus.json'")
 
-# Charger le corpus
-try:
-    print(Fore.CYAN + "\nTentative de chargement du corpus...")
-    loaded_corpus = Corpus.load('corpus.pkl')
-    print(Fore.CYAN + "\nCorpus chargé depuis le fichier:")
+    try:
+        print(Fore.CYAN + "\nTentative de chargement du corpus...")
+        loaded_corpus = Corpus.load('corpus.pkl')
+        print(Fore.CYAN + "\nCorpus chargé depuis le fichier:")
 
-    # Obtenir le nombre total de documents
-    total_docs = len(loaded_corpus.id2doc)
-    print(Fore.YELLOW + f"Nombre total de documents : {total_docs}")
+        total_docs = len(loaded_corpus.id2doc)
+        print(Fore.YELLOW + f"Nombre total de documents : {total_docs}")
 
-    # Vérifier s'il y a assez de documents pour appliquer cette logique
-    if total_docs <= 20:
-        print(Fore.MAGENTA + "\nTous les documents du corpus chargé :")
-        for doc_id, doc in loaded_corpus.id2doc.items():
-            print(Fore.CYAN + f"ID: {doc_id}")
-            print(Fore.YELLOW + f"Source: {doc.getType()}")
-            print(Fore.GREEN + f"Titre: {doc.titre}")
-            print(Fore.LIGHTWHITE_EX + f"Auteur: {doc.auteur}")
-            print(Fore.WHITE + f"Date: {doc.date}")
-            print(Fore.WHITE + f"Contenu: {doc.texte[:100]}...")  # Afficher les 100 premiers caractères du contenu
-            print(Fore.WHITE + "-" * 50)
-    else:
-        print(Fore.MAGENTA + "\nLes 10 premiers documents :")
-        for doc_id, doc in list(loaded_corpus.id2doc.items())[:10]:
-            print(Fore.CYAN + f"ID: {doc_id}")
-            print(Fore.YELLOW + f"Source: {doc.getType()}")
-            print(Fore.GREEN + f"Titre: {doc.titre}")
-            print(Fore.LIGHTWHITE_EX + f"Auteur: {doc.auteur}")
-            print(Fore.WHITE + f"Date: {doc.date}")
-            print(Fore.WHITE + f"Contenu: {doc.texte[:100]}...")
-            print(Fore.WHITE + "-" * 50)
+        if total_docs <= 20:
+            print(Fore.MAGENTA + "\nTous les documents du corpus chargé :")
+            for doc_id, doc in loaded_corpus.id2doc.items():
+                print_document_details(doc_id, doc)
+        else:
+            print(Fore.MAGENTA + "\nLes 10 premiers documents :")
+            for doc_id, doc in list(loaded_corpus.id2doc.items())[:10]:
+                print_document_details(doc_id, doc)
 
-        print(Fore.LIGHTWHITE_EX + "...\n(Plusieurs documents intermédiaires non affichés)\n...")
+            print(Fore.LIGHTWHITE_EX + "...\n(Plusieurs documents intermédiaires non affichés)\n...")
 
-        print(Fore.MAGENTA + "\nLes 10 derniers documents :")
-        for doc_id, doc in list(loaded_corpus.id2doc.items())[-10:]:
-            print(Fore.CYAN + f"ID: {doc_id}")
-            print(Fore.YELLOW + f"Source: {doc.getType()}")
-            print(Fore.GREEN + f"Titre: {doc.titre}")
-            print(Fore.LIGHTWHITE_EX + f"Auteur: {doc.auteur}")
-            print(Fore.WHITE + f"Date: {doc.date}")
-            print(Fore.WHITE + f"Contenu: {doc.texte[:100]}...")
-            print(Fore.WHITE + "-" * 50)
+            print(Fore.MAGENTA + "\nLes 10 derniers documents :")
+            for doc_id, doc in list(loaded_corpus.id2doc.items())[-10:]:
+                print_document_details(doc_id, doc)
 
-    # Ajouter un menu interactif pour afficher les documents selon différents critères
+        interactive_menu(loaded_corpus)
+
+    except Exception as e:
+        print(Fore.RED + f"Erreur lors du chargement du corpus: {e}")
+
+def print_document_details(doc_id, doc):
+    """
+    Print the details of a single document in a formatted style.
+
+    Args:
+        doc_id (int): The document ID.
+        doc (Document): The document object containing its details.
+    """
+    print(Fore.CYAN + f"ID: {doc_id}")
+    print(Fore.YELLOW + f"Source: {doc.getType()}")
+    print(Fore.GREEN + f"Titre: {doc.titre}")
+    print(Fore.LIGHTWHITE_EX + f"Auteur: {doc.auteur}")
+    print(Fore.WHITE + f"Date: {doc.date}")
+    print(Fore.WHITE + f"Contenu: {doc.texte[:100]}...")
+    print(Fore.WHITE + "-" * 50)
+
+def interactive_menu(loaded_corpus):
+    """
+    Display an interactive menu for various document display options.
+
+    Args:
+        loaded_corpus (Corpus): The loaded corpus object.
+    """
     while True:
         print(Fore.MAGENTA + "\nMenu :")
         print(Fore.CYAN + "1. Afficher les documents triés par date")
@@ -122,5 +128,5 @@ try:
         else:
             print(Fore.RED + "Choix invalide, veuillez réessayer.")
 
-except Exception as e:
-    print(Fore.RED + f"Erreur lors du chargement du corpus: {e}")
+if __name__ == "__main__":
+    main()
