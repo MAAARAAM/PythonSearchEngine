@@ -323,3 +323,29 @@ class Corpus_v2(Corpus):
         else:
             sentiment_label = "Neutre"
         print(f"Analyse sentimentale moyenne du corpus : {avg_sentiment:.2f} ({sentiment_label})")
+
+    def afficher_documents_tries_par_titre(self, n=None):
+        """
+        Retourne les documents triés par titre.
+
+        Args:
+            n (int): Le nombre de documents à retourner. Si None, retourne tous les documents.
+
+        Returns:
+            list: Liste des documents triés par titre.
+        """
+        sorted_docs = sorted(self.id2doc.values(), key=lambda doc: doc.titre or "")
+        return sorted_docs[:n] if n else sorted_docs
+
+    def afficher_documents_tries_par_date(self, n=None):
+        """
+        Retourne les documents triés par date.
+
+        Args:
+            n (int): Le nombre de documents à retourner. Si None, retourne tous les documents.
+
+        Returns:
+            list: Liste des documents triés par date.
+        """
+        sorted_docs = sorted(self.id2doc.values(), key=lambda doc: doc.date or datetime.min, reverse=True)
+        return sorted_docs[:n] if n else sorted_docs
