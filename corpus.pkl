@@ -13,8 +13,6 @@ app = dash.Dash(
     suppress_callback_exceptions=True
 )
 
-# Le reste du code est inchangé et corrigé.
-
 # Step 1: Initialize Corpus and Load Data
 corpus_v2 = Corpus_v2("MonCorpusV3")
 
@@ -47,26 +45,6 @@ for index, row in combined_data.iterrows():
 
 # Step 2: Search Engine Initialization
 search_engine = SearchEngine(corpus_v2)
-
-def get_authors(corpus):
-    """
-    Extract all unique authors from the corpus.
-
-    Args:
-        corpus (Corpus): The loaded corpus object.
-
-    Returns:
-        dict: A dictionary mapping author names to their documents.
-    """
-    authors = {}
-    for doc_id, doc in corpus.id2doc.items():
-        auteur = doc.auteur
-        if not auteur or auteur == 'No author available':
-            continue  # Ignore documents without a valid author
-        if auteur not in authors:
-            authors[auteur] = []
-        authors[auteur].append(doc)
-    return authors
 
 # Step 3: Define the Dash layout
 app.layout = dbc.Container([
@@ -105,29 +83,7 @@ app.layout = dbc.Container([
         dbc.Col(html.Div(id='results-area', className='mt-4'))
     ]),
 
-    html.Hr(),
-
-    dbc.Row([
-        dbc.Col(html.H3("Autres fonctionnalités", className="text-secondary mb-4"), width=12)
-    ]),
-
-    dbc.Row([
-        dbc.Col([
-            dbc.Button('Afficher les documents triés par date', id='sort-date-button', color='info', className='mb-2'),
-            html.Div(id='sort-date-results', className='mb-4')
-        ]),
-        dbc.Col([
-            dbc.Button('Afficher les documents triés par titre', id='sort-title-button', color='info', className='mb-2'),
-            html.Div(id='sort-title-results', className='mb-4')
-        ])
-    ]),
-
-    dbc.Row([
-        dbc.Col([
-            dbc.Button('Afficher les documents par auteur', id='by-author-button', color='info', className='mb-2'),
-            html.Div(id='by-author-results', className='mb-4')
-        ])
-    ])
+    html.Hr()
 ], fluid=True)
 
 # Step 4: Define the callbacks
@@ -152,64 +108,6 @@ def perform_search(n_clicks, query, num_docs):
             html.Tr([html.Td(results.iloc[i][col]) for col in results.columns]) for i in range(len(results))
         ])
     ], className='table table-striped')
-
-@app.callback(
-    Output('sort-date-results', 'children'),
-    Input('sort-date-button', 'n_clicks')
-)
-def display_sorted_by_date(n_clicks):
-    if not n_clicks:
-        return ""
-
-    sorted_docs = corpus_v2.afficher_documents_tries_par_date(10)
-    return html.Ul([html.Li(doc.titre) for doc in sorted_docs])
-
-@app.callback(
-    Output('sort-title-results', 'children'),
-    Input('sort-title-button', 'n_clicks')
-)
-def display_sorted_by_title(n_clicks):
-    if not n_clicks:
-        return ""
-
-    sorted_docs = corpus_v2.afficher_documents_tries_par_titre(10)
-    if not sorted_docs:
-        return html.Div("Aucun document à afficher.", style={'color': 'red'})
-
-    return html.Ul([html.Li(doc.titre) for doc in sorted_docs])
-
-
-@app.callback(
-    Output('by-author-results', 'children'),
-    Input('by-author-button', 'n_clicks')
-)
-def display_by_author(n_clicks):
-    if not n_clicks:
-        return ""
-
-    authors = get_authors(corpus_v2)
-    return html.Div([
-        html.Label("Sélectionnez un auteur:"),
-        dcc.Dropdown(
-            id='author-dropdown',
-            options=[{'label': author, 'value': author} for author in authors.keys()],
-            className='form-control mb-3'
-        ),
-        html.Div(id='author-documents')
-    ])
-
-@app.callback(
-    Output('author-documents', 'children'),
-    Input('author-dropdown', 'value')
-)
-def update_author_documents(author):
-    if not author:
-        return "Veuillez sélectionner un auteur."
-
-    authors = get_authors(corpus_v2)
-    documents = authors.get(author, [])
-
-    return html.Ul([html.Li(doc.titre) for doc in documents])
 
 # Step 5: Run the Dash app
 if __name__ == "__main__":

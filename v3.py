@@ -68,6 +68,45 @@ def get_authors(corpus):
 
 # Step 3: Define the Dash layout
 app.layout = dbc.Container([
+    # Interface 1
+    dbc.Row([
+        dbc.Col(html.H1("Interface de Recherche Avancée", className="text-center text-primary mb-4"), width=12)
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            html.Label("Requête:"),
+            dcc.Input(id='query-input', type='text', placeholder='Entrez votre requête ici', className='form-control mb-3'),
+        ]),
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            html.Label("Nombre de documents:"),
+            dcc.Slider(
+                id='num-docs-slider',
+                min=1,
+                max=20,
+                step=1,
+                value=5,
+                marks={i: str(i) for i in range(1, 21)}
+            ),
+        ], width=12)
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.Button('Rechercher', id='search-button', color='primary', className='mt-3')
+        ])
+    ]),
+
+    dbc.Row([
+        dbc.Col(html.Div(id='results-area', className='mt-4'))
+    ]),
+
+    html.Hr(),
+
+    # Interface 2
     dbc.Row([
         dbc.Col(html.H1("Moteur de Recherche de Corpus", className="text-center text-primary mb-4"), width=12)
     ]),
@@ -88,6 +127,28 @@ app.layout = dbc.Container([
 ], fluid=True)
 
 # Step 4: Define the callbacks
+@app.callback(
+    Output('results-area', 'children'),
+    Input('search-button', 'n_clicks'),
+    State('query-input', 'value'),
+    State('num-docs-slider', 'value')
+)
+def perform_search(n_clicks, query, num_docs):
+    if not query:
+        return html.Div("Veuillez entrer une requête valide.", style={'color': 'red'})
+
+    results = search_engine.search(query, n_documents=num_docs)
+
+    if results.empty:
+        return html.Div(f"Aucun résultat trouvé pour : '{query}'.", style={'color': 'red'})
+
+    return html.Table([
+        html.Thead(html.Tr([html.Th(col) for col in results.columns])),
+        html.Tbody([
+            html.Tr([html.Td(results.iloc[i][col]) for col in results.columns]) for i in range(len(results))
+        ])
+    ], className='table table-striped')
+
 @app.callback(
     Output('document-list', 'children'),
     [Input('sort-date-button', 'n_clicks'),
