@@ -349,3 +349,6 @@ class Corpus_v2(Corpus):
         """
         sorted_docs = sorted(self.id2doc.values(), key=lambda doc: doc.date or datetime.min, reverse=True)
         return sorted_docs[:n] if n else sorted_docs
+    
+    def clear_corpus(self):
+        self.id2doc.clear()
