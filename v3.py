@@ -68,11 +68,31 @@ def get_authors(corpus):
 
 # Step 3: Define the Dash layout
 app.layout = dbc.Container([
-    # Interface 1
+    # Interface for Theme Selection
     dbc.Row([
         dbc.Col(html.H1("Interface de Recherche Avancée", className="text-center text-primary mb-4"), width=12)
     ]),
 
+    dbc.Row([
+        dbc.Col([
+            html.Label("Thème d'extraction:"),
+            dcc.Input(id='theme-input', type='text', placeholder='Entrez le thème ici', className='form-control mb-3'),
+        ]),
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.Button('Charger les données', id='load-data-button', color='success', className='mt-3')
+        ])
+    ]),
+
+    dbc.Row([
+        dbc.Col(html.Div(id='data-loading-status', className='mt-4'))
+    ]),
+
+    html.Hr(),
+
+    # Interface 1
     dbc.Row([
         dbc.Col([
             html.Label("Requête:"),
@@ -100,9 +120,7 @@ app.layout = dbc.Container([
         ])
     ]),
 
-    dbc.Row([
-        dbc.Col(html.Div(id='results-area', className='mt-4'))
-    ]),
+    dbc.Row([dbc.Col(html.Div(id='results-area', className='mt-4'))]),
 
     html.Hr(),
 
@@ -119,12 +137,50 @@ app.layout = dbc.Container([
         ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
-    dbc.Row([
-        dbc.Col(html.Div(id='document-list', className='mt-4'))
-    ]),
+    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))]),
 
     html.Hr()
 ], fluid=True)
+
+# Step 4: Define the callbacks
+@app.callback(
+    Output('data-loading-status', 'children'),
+    Input('load-data-button', 'n_clicks'),
+    State('theme-input', 'value')
+)
+def load_data(n_clicks, theme):
+    if not theme:
+        return html.Div("Veuillez entrer un thème valide pour charger les données.", style={'color': 'red'})
+
+    # Fetch data based on the theme
+    newsapi_data = corpus_v2.fetch_newsapi_data(theme, page_size=100)
+    newsapi_data['type'] = 'newsapi'
+
+    guardian_data = corpus_v2.fetch_guardian_data(theme, page_size=100)
+    guardian_data['type'] = 'guardian'
+
+    combined_data = pd.concat([newsapi_data, guardian_data], ignore_index=True)
+
+    for index, row in combined_data.iterrows():
+        if row['type'] == 'newsapi':
+            doc = NewsAPIDocument(
+                titre=row.get('Title', 'No title available'),
+                auteur=row.get('Author', 'No author available'),
+                date=row.get('PublishedAt', 'No date available'),
+                texte=row.get('Content', 'No content available'),
+                description=row.get('Description', 'No description available')
+            )
+        elif row['type'] == 'guardian':
+            doc = GuardianDocument(
+                titre=row.get('Title', 'No title available'),
+                auteur=row.get('Author', 'No author available'),
+                date=row.get('PublishedAt', 'No date available'),
+                texte=row.get('Content', 'No content available'),
+                description=row.get('Description', 'No description available')
+            )
+        corpus_v2.add_document(doc)
+
+    return html.Div(f"Données chargées avec succès pour le thème : '{theme}'.", style={'color': 'green'})
 
 # Step 4: Define the callbacks
 @app.callback(
