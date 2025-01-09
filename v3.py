@@ -1,5 +1,5 @@
 import dash
-from dash import dcc, html, Input, Output, State
+from dash import dcc, html, Input, Output, State, callback_context
 import pandas as pd
 from Corpus import Corpus_v2
 from Document import NewsAPIDocument, GuardianDocument
@@ -46,29 +46,8 @@ for index, row in combined_data.iterrows():
 # Step 2: Search Engine Initialization
 search_engine = SearchEngine(corpus_v2)
 
-def get_authors(corpus):
-    """
-    Extract all unique authors from the corpus.
-
-    Args:
-        corpus (Corpus): The loaded corpus object.
-
-    Returns:
-        dict: A dictionary mapping author names to their documents.
-    """
-    authors = {}
-    for doc_id, doc in corpus.id2doc.items():
-        auteur = doc.auteur
-        if not auteur or auteur == 'No author available':
-            continue  # Ignore documents without a valid author
-        if auteur not in authors:
-            authors[auteur] = []
-        authors[auteur].append(doc)
-    return authors
-
 # Step 3: Define the Dash layout
 app.layout = dbc.Container([
-    # Store for storing extracted data
     dcc.Store(id='corpus-data-store'),
 
     # Interface for Theme Selection
@@ -84,14 +63,18 @@ app.layout = dbc.Container([
     ]),
 
     dbc.Row([
-        dbc.Col([
-            dbc.Button('Charger les données', id='load-data-button', color='success', className='mt-3')
-        ])
+        dbc.Col(
+            dcc.Loading(
+                id="loading-data",
+                type="circle",
+                children=[
+                    dbc.Button('Charger les données', id='load-data-button', color='success', className='mt-3')
+                ],
+            )
+        )
     ]),
 
-    dbc.Row([
-        dbc.Col(html.Div(id='data-loading-status', className='mt-4'))
-    ]),
+    dbc.Row([dbc.Col(html.Div(id='data-loading-status', className='mt-4'))]),
 
     html.Hr(),
 
@@ -128,9 +111,7 @@ app.layout = dbc.Container([
     html.Hr(),
 
     # Interface 2
-    dbc.Row([
-        dbc.Col(html.H1("Moteur de Recherche de Corpus", className="text-center text-primary mb-4"), width=12)
-    ]),
+    dbc.Row([dbc.Col(html.H1("Moteur de Recherche de Corpus", className="text-center text-primary mb-4"), width=12)]),
 
     dbc.Row([
         dbc.Col([
@@ -140,9 +121,7 @@ app.layout = dbc.Container([
         ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
-    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))]),
-
-    html.Hr()
+    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))])
 ], fluid=True)
 
 # Step 4: Define the callbacks
@@ -152,12 +131,11 @@ app.layout = dbc.Container([
     Input('load-data-button', 'n_clicks'),
     State('theme-input', 'value')
 )
-
 def load_data(n_clicks, theme):
     if not theme:
         return None, html.Div("Veuillez entrer un thème valide pour charger les données.", style={'color': 'red'})
 
-    # Fetch data based on the theme
+    # Simuler un chargement de données
     newsapi_data = corpus_v2.fetch_newsapi_data(theme, page_size=100)
     newsapi_data['type'] = 'newsapi'
 
@@ -168,28 +146,17 @@ def load_data(n_clicks, theme):
 
     documents = []
     for index, row in combined_data.iterrows():
-        if row['type'] == 'newsapi':
-            documents.append({
-                'titre': row.get('Title', 'No title available'),
-                'auteur': row.get('Author', 'No author available'),
-                'date': row.get('PublishedAt', 'No date available'),
-                'texte': row.get('Content', 'No content available'),
-                'description': row.get('Description', 'No description available'),
-                'type': 'newsapi'
-            })
-        elif row['type'] == 'guardian':
-            documents.append({
-                'titre': row.get('Title', 'No title available'),
-                'auteur': row.get('Author', 'No author available'),
-                'date': row.get('PublishedAt', 'No date available'),
-                'texte': row.get('Content', 'No content available'),
-                'description': row.get('Description', 'No description available'),
-                'type': 'guardian'
-            })
+        documents.append({
+            'titre': row.get('Title', 'No title available'),
+            'auteur': row.get('Author', 'No author available'),
+            'date': row.get('PublishedAt', 'No date available'),
+            'texte': row.get('Content', 'No content available'),
+            'description': row.get('Description', 'No description available'),
+            'type': row['type']
+        })
 
     return documents, html.Div(f"Données chargées avec succès pour le thème : '{theme}'.", style={'color': 'green'})
 
-# Step 4: Define the callbacks
 @app.callback(
     Output('results-area', 'children'),
     Input('search-button', 'n_clicks'),
@@ -219,15 +186,13 @@ def perform_search(n_clicks, query, num_docs):
      Input('by-author-button', 'n_clicks'),
      Input('corpus-data-store', 'data')]
 )
-
 def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, corpus_data):
     if not corpus_data:
         return "Aucun document disponible. Veuillez charger les données."
     
-    # Convert the data back into a DataFrame
     df = pd.DataFrame(corpus_data)
 
-    ctx = dash.callback_context
+    ctx = callback_context
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
@@ -236,7 +201,6 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
         elif button_id == 'sort-title-button':
             df = df.sort_values(by='titre', ascending=True)
         elif button_id == 'by-author-button':
-            # Filter valid authors (exclude null)
             authors = df['auteur'].dropna().unique()
 
             return html.Div([
@@ -245,7 +209,7 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
                     id='author-dropdown',
                     options=[
                         {'label': author, 'value': author}
-                        for author in authors if author  # Exclude null or empty authors
+                        for author in authors if author
                     ],
                     className='form-control mb-3'
                 ),
@@ -253,6 +217,7 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
             ])
 
     return html.Ul([html.Li(f"{row['titre']} - {row['auteur'] or 'Auteur inconnu'}") for _, row in df.iterrows()])
+
 @app.callback(
     Output('author-documents', 'children'),
     [Input('author-dropdown', 'value'),
