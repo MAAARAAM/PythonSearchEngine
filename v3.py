@@ -216,7 +216,30 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
                 html.Div(id='author-documents')
             ])
 
-    return html.Ul([html.Li(f"{row['titre']} - {row['auteur'] or 'Auteur inconnu'}") for _, row in df.iterrows()])
+    # Mise en forme des documents en tableaux
+    return html.Div([
+        dbc.Card([
+            dbc.CardBody([
+                html.Div([
+                    html.Div([
+                        html.Strong("Titre: "),
+                        html.Span(row['titre']),
+                    ], style={"flex": "1"}),
+
+                    html.Div([
+                        html.Strong("Auteur: "),
+                        html.Span(row['auteur'] or "Auteur inconnu"),
+                    ], style={"flex": "1"}),
+                ], style={"display": "flex", "justify-content": "space-between", "margin-bottom": "10px"}),
+
+                html.Div([
+                    html.Strong("Contenu: "),
+                    html.P(row['texte'] or "Contenu indisponible", style={"margin-top": "5px"}),
+                ]),
+            ])
+        ], style={"margin-bottom": "20px"})
+        for _, row in df.iterrows()
+    ])
 
 @app.callback(
     Output('author-documents', 'children'),
