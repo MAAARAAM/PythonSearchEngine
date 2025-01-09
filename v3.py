@@ -5,6 +5,15 @@ from Corpus import Corpus_v2
 from Document import NewsAPIDocument, GuardianDocument
 from SearchEngine import SearchEngine
 import dash_bootstrap_components as dbc
+import io
+import base64
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+from dash.exceptions import PreventUpdate  # This import is essential to handle 'no update' case
+import re  # For regular expression handling in wordcloud generation
+from nltk.corpus import stopwords  # To filter out stopwords when generating word clouds
+from textblob import TextBlob  # For sentiment analysis (TextBlob library)
+
 
 # Initialize Dash app with Bootstrap theme and suppress callback exceptions
 app = dash.Dash(
@@ -47,6 +56,7 @@ for index, row in combined_data.iterrows():
 search_engine = SearchEngine(corpus_v2)
 
 # Step 3: Define the Dash layout
+# Updated Dash layout
 app.layout = dbc.Container([
     dcc.Store(id='corpus-data-store'),
 
@@ -78,7 +88,7 @@ app.layout = dbc.Container([
 
     html.Hr(),
 
-    # Interface 1
+    # Search Interface
     dbc.Row([
         dbc.Col([
             html.Label("Requête:"),
@@ -102,15 +112,14 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            dbc.Button('Rechercher', id='search-button', color='primary', className='mt-3')
+            dbc.Button('Rechercher', id='search-button', color='primary', className='mt-3'),
+            html.Div(id='search-results-area', className='mt-4')
         ])
     ]),
 
-    dbc.Row([dbc.Col(html.Div(id='results-area', className='mt-4'))]),
-
     html.Hr(),
 
-    # Interface 2
+    # Additional Features
     dbc.Row([dbc.Col(html.H1("Moteur de Recherche de Corpus", className="text-center text-primary mb-4"), width=12)]),
 
     dbc.Row([
@@ -118,13 +127,34 @@ app.layout = dbc.Container([
             dbc.Button('Afficher les documents triés par date', id='sort-date-button', color='info', className='mx-2'),
             dbc.Button('Afficher les documents triés par titre', id='sort-title-button', color='info', className='mx-2'),
             dbc.Button('Afficher les documents par auteur', id='by-author-button', color='info', className='mx-2'),
+            html.Div(id='document-list', className='mt-4')
         ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
-    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))]),
+    dbc.Row([
+        dbc.Col([
+            dbc.Button('Statistiques', id='stats-button', color='info', className='mx-2'),
+            html.Div(id='stats-results-area', className='mt-4')
+        ])
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.Button('Nuage de mots', id='wordcloud-button', color='info', className='mx-2'),
+            html.Div(id='wordcloud-results-area', className='mt-4')
+        ])
+    ]),
+
+    dbc.Row([
+        dbc.Col([
+            dbc.Button('Analyse sentimentale', id='sentiment-button', color='info', className='mx-2'),
+            html.Div(id='sentiment-results-area', className='mt-4')
+        ])
+    ]),
 
     dbc.Row([], className="mb-5")
 ], fluid=True)
+
 
 # Step 4: Define the callbacks
 @app.callback(
@@ -156,6 +186,8 @@ def load_data(n_clicks, theme):
             'description': row.get('Description', 'No description available'),
             'type': row['type']
         })
+    
+    print("Documents chargés:", documents)  # Pour déboguer
 
     return documents, html.Div(f"Données chargées avec succès pour le thème : '{theme}'.", style={'color': 'green'})
 
@@ -164,7 +196,7 @@ def load_data(n_clicks, theme):
     Input('search-button', 'n_clicks'),
     State('query-input', 'value'),
     State('num-docs-slider', 'value')
-)
+    )
 def perform_search(n_clicks, query, num_docs):
     if not query:
         return html.Div("Veuillez entrer une requête valide.", style={'color': 'red'})
@@ -247,7 +279,8 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
 @app.callback(
     Output('author-documents', 'children'),
     [Input('author-dropdown', 'value'),
-     State('corpus-data-store', 'data')]
+     State('corpus-data-store', 'data'),
+ ]
 )
 def update_author_documents(author, corpus_data):
     if not corpus_data:
@@ -286,6 +319,68 @@ def update_author_documents(author, corpus_data):
         ], style={"margin-bottom": "20px"})
         for _, row in author_docs.iterrows()
     ])
+
+@app.callback(
+    Output('stats-results-area', 'children'),
+    Input('stats-button', 'n_clicks'),
+    State('corpus-data-store', 'data')
+)
+def display_stats(n_clicks, corpus_data):
+    if not corpus_data:
+        return "Aucun document disponible. Veuillez charger les données."
+
+    stats_df = corpus_v2.stats(n_mots=10)
+    return html.Table([
+        html.Thead(html.Tr([html.Th(col) for col in stats_df.columns])),
+        html.Tbody([
+            html.Tr([html.Td(stats_df.iloc[i][col]) for col in stats_df.columns]) for i in range(len(stats_df))
+        ])
+    ], className='table table-striped')
+
+
+@app.callback(
+    Output('wordcloud-results-area', 'children'),
+    Input('wordcloud-button', 'n_clicks'),
+    State('corpus-data-store', 'data')
+)
+def display_wordcloud(n_clicks, corpus_data):
+    if not corpus_data:
+        return "Aucun document disponible. Veuillez charger les données."
+
+    stop_words = set(stopwords.words('english'))
+    textes = " ".join([doc['texte'] for doc in corpus_data])
+    mots = re.findall(r'\w+', textes)
+    mots_sans_stopwords = [mot for mot in mots if mot.lower() not in stop_words]
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(mots_sans_stopwords))
+    img_buffer = io.BytesIO()
+    wordcloud.to_image().save(img_buffer, format="PNG")
+    img_buffer.seek(0)
+    img_str = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+    return html.Div([
+        html.H3("Nuage de mots", className="text-center"),
+        html.Img(
+            src="data:image/png;base64,{}".format(img_str),
+            style={'width': '50%', 'display': 'block', 'margin': '0 auto'}
+        )
+    ])
+
+@app.callback(
+    Output('sentiment-results-area', 'children'),
+    Input('sentiment-button', 'n_clicks'),
+    State('corpus-data-store', 'data')
+)
+def display_sentiment(n_clicks, corpus_data):
+    if not corpus_data:
+        return "Aucun document disponible. Veuillez charger les données."
+
+    sentiments = []
+    for doc in corpus_data:
+        blob = TextBlob(doc['texte'])
+        sentiments.append(blob.sentiment.polarity)
+
+    avg_sentiment = sum(sentiments) / len(sentiments) if sentiments else 0
+    sentiment_label = "Positif" if avg_sentiment > 0.1 else "Négatif" if avg_sentiment < -0.1 else "Neutre"
+    return html.Div(f"Analyse sentimentale moyenne du corpus : {avg_sentiment:.2f} ({sentiment_label})")
 
 
 # Step 5: Run the Dash app
