@@ -121,7 +121,9 @@ app.layout = dbc.Container([
         ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
-    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))])
+    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))]),
+
+    dbc.Row([], className="mb-5")
 ], fluid=True)
 
 # Step 4: Define the callbacks
@@ -234,8 +236,9 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
 
                 html.Div([
                     html.Strong("Contenu: "),
-                    html.P(row['texte'] or "Contenu indisponible", style={"margin-top": "5px"}),
+                    html.Pre(row['texte'] or "Contenu indisponible", style={"margin-top": "5px", "white-space": "pre-wrap"}),
                 ]),
+
             ])
         ], style={"margin-bottom": "20px"})
         for _, row in df.iterrows()
@@ -256,7 +259,34 @@ def update_author_documents(author, corpus_data):
     df = pd.DataFrame(corpus_data)
     author_docs = df[df['auteur'] == author]
 
-    return html.Ul([html.Li(doc) for doc in author_docs['titre']])
+    if author_docs.empty:
+        return f"Aucun document trouvé pour l'auteur : {author}"
+
+    # Mise en forme des documents en cartes détaillées
+    return html.Div([
+        dbc.Card([
+            dbc.CardBody([
+                html.Div([
+                    html.Div([
+                        html.Strong("Titre: "),
+                        html.Span(row['titre']),
+                    ], style={"flex": "1"}),
+
+                    html.Div([
+                        html.Strong("Auteur: "),
+                        html.Span(row['auteur'] or "Auteur inconnu"),
+                    ], style={"flex": "1"}),
+                ], style={"display": "flex", "justify-content": "space-between", "margin-bottom": "10px"}),
+
+                html.Div([
+                    html.Strong("Contenu: "),
+                    html.Pre(row['texte'] or "Contenu indisponible", style={"margin-top": "5px", "white-space": "pre-wrap"}),
+                ]),
+            ])
+        ], style={"margin-bottom": "20px"})
+        for _, row in author_docs.iterrows()
+    ])
+
 
 # Step 5: Run the Dash app
 if __name__ == "__main__":
