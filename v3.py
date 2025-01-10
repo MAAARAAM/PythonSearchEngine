@@ -117,11 +117,7 @@ app.layout = dbc.Container([
         ])
     ]),
 
-    # Separate containers for different results
     dbc.Row([dbc.Col(html.Div(id='search-results-area', className='mt-4'))]),
-    dbc.Row([dbc.Col(html.Div(id='stats-results-area', className='mt-4'))]),
-    dbc.Row([dbc.Col(html.Div(id='wordcloud-results-area', className='mt-4'))]),
-    dbc.Row([dbc.Col(html.Div(id='sentiment-results-area', className='mt-4'))]),
 
     html.Hr(),
 
@@ -133,14 +129,6 @@ app.layout = dbc.Container([
             dbc.Button('Afficher les documents triés par date', id='sort-date-button', color='info', className='mx-2'),
             dbc.Button('Afficher les documents triés par titre', id='sort-title-button', color='info', className='mx-2'),
             dbc.Button('Afficher les documents par auteur', id='by-author-button', color='info', className='mx-2'),
-        ], width=12, className="d-flex justify-content-center mb-3")
-    ]),
-
-    dbc.Row([
-        dbc.Col([
-            dbc.Button('Statistiques', id='stats-button', color='info', className='mx-2'),
-            dbc.Button('Nuage de mots', id='wordcloud-button', color='info', className='mx-2'),
-            dbc.Button('Analyse sentimentale', id='sentiment-button', color='info', className='mx-2'),
         ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
@@ -186,20 +174,28 @@ def load_data(n_clicks, theme):
     return documents, html.Div(f"Données chargées avec succès pour le thème : '{theme}'.", style={'color': 'green'})
 
 @app.callback(
-    Output('results-area', 'children'),
+    Output('search-results-area', 'children'),  # ID correct
     Input('search-button', 'n_clicks'),
     State('query-input', 'value'),
     State('num-docs-slider', 'value')
-    )
+)
 def perform_search(n_clicks, query, num_docs):
+    # Si le bouton n'est pas cliqué, ne rien faire
+    if not n_clicks:
+        raise PreventUpdate
+
+    # Vérifiez si la requête est vide
     if not query:
         return html.Div("Veuillez entrer une requête valide.", style={'color': 'red'})
 
+    # Exécutez la recherche
     results = search_engine.search(query, n_documents=num_docs)
 
+    # Vérifiez si les résultats sont vides
     if results.empty:
         return html.Div(f"Aucun résultat trouvé pour : '{query}'.", style={'color': 'red'})
 
+    # Retournez les résultats sous forme de tableau HTML
     return html.Table([
         html.Thead(html.Tr([html.Th(col) for col in results.columns])),
         html.Tbody([
@@ -255,8 +251,8 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
                     ], style={"flex": "1"}),
 
                     html.Div([
-                        html.Strong("Auteur: "),
-                        html.Span(row['auteur'] or "Auteur inconnu"),
+                        html.Strong("Auteur et Date: "),
+                        html.Span(f"{row['auteur'] or 'Auteur inconnu'} - {row['date'] or 'Date inconnue'}"),
                     ], style={"flex": "1"}),
                 ], style={"display": "flex", "justify-content": "space-between", "margin-bottom": "10px"}),
 
@@ -313,67 +309,6 @@ def update_author_documents(author, corpus_data):
         ], style={"margin-bottom": "20px"})
         for _, row in author_docs.iterrows()
     ])
-
-@app.callback(
-    Output('stats-results-area', 'children'),
-    Input('stats-button', 'n_clicks'),
-    State('corpus-data-store', 'data')
-)
-def display_stats(n_clicks, corpus_data):
-    if not corpus_data:
-        return "Aucun document disponible. Veuillez charger les données."
-
-    stats_df = corpus_v2.stats(n_mots=10)
-    return html.Table([
-        html.Thead(html.Tr([html.Th(col) for col in stats_df.columns])),
-        html.Tbody([
-            html.Tr([html.Td(stats_df.iloc[i][col]) for col in stats_df.columns]) for i in range(len(stats_df))
-        ])
-    ], className='table table-striped')
-
-
-@app.callback(
-    Output('wordcloud-results-area', 'children'),
-    Input('wordcloud-button', 'n_clicks'),
-    State('corpus-data-store', 'data')
-)
-def display_wordcloud(n_clicks, corpus_data):
-    if not corpus_data:
-        return "Aucun document disponible. Veuillez charger les données."
-
-    stop_words = set(stopwords.words('english'))
-    textes = " ".join([doc['texte'] for doc in corpus_data])
-    mots = re.findall(r'\w+', textes)
-    mots_sans_stopwords = [mot for mot in mots if mot.lower() not in stop_words]
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(mots_sans_stopwords))
-    img_buffer = io.BytesIO()
-    wordcloud.to_image().save(img_buffer, format="PNG")
-    img_buffer.seek(0)
-    img_str = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
-    return html.Div([
-        html.H3("Nuage de mots"),
-        html.Img(src="data:image/png;base64,{}".format(img_str), style={'width': '100%', 'height': 'auto'})
-    ])
-
-
-@app.callback(
-    Output('sentiment-results-area', 'children'),
-    Input('sentiment-button', 'n_clicks'),
-    State('corpus-data-store', 'data')
-)
-def display_sentiment(n_clicks, corpus_data):
-    if not corpus_data:
-        return "Aucun document disponible. Veuillez charger les données."
-
-    sentiments = []
-    for doc in corpus_data:
-        blob = TextBlob(doc['texte'])
-        sentiments.append(blob.sentiment.polarity)
-
-    avg_sentiment = sum(sentiments) / len(sentiments) if sentiments else 0
-    sentiment_label = "Positif" if avg_sentiment > 0.1 else "Négatif" if avg_sentiment < -0.1 else "Neutre"
-    return html.Div(f"Analyse sentimentale moyenne du corpus : {avg_sentiment:.2f} ({sentiment_label})")
-
 
 # Step 5: Run the Dash app
 if __name__ == "__main__":
