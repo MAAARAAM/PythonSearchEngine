@@ -1,9 +1,10 @@
 pandas
-nltk
-matplotlib
 dash
 dash-bootstrap-components
+nltk
 textblob
-wordcloud
 colorama
+wordcloud
+pytest
+scipy
 tabulate
