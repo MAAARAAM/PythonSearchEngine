@@ -10,3 +10,7 @@ scipy
 tabulate
 stopwords 
 nltk
+numpy
+matplotlib
+requests
+python-dateutil
