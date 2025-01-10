@@ -146,6 +146,17 @@ app.layout = dbc.Container([
     State('theme-input', 'value')
 )
 def load_data(n_clicks, theme):
+    """
+    Callback to load data based on the specified theme.
+
+    Parameters:
+        n_clicks (int): Number of times the load data button was clicked.
+        theme (str): The theme entered by the user for data extraction.
+
+    Returns:
+        list: A list of documents extracted from the APIs.
+        html.Div: A status message indicating success or failure.
+    """
     if not theme:
         return None, html.Div("Veuillez entrer un thème valide pour charger les données.", style={'color': 'red'})
 
@@ -180,22 +191,29 @@ def load_data(n_clicks, theme):
     State('num-docs-slider', 'value')
 )
 def perform_search(n_clicks, query, num_docs):
-    # Si le bouton n'est pas cliqué, ne rien faire
+    """
+    Callback to perform a search query and display the results.
+
+    Parameters:
+        n_clicks (int): Number of times the search button was clicked.
+        query (str): The search query entered by the user.
+        num_docs (int): The number of documents to retrieve.
+
+    Returns:
+        html.Table: A table displaying the search results.
+        html.Div: A message if no results are found or the query is invalid.
+    """
     if not n_clicks:
         raise PreventUpdate
 
-    # Vérifiez si la requête est vide
     if not query:
         return html.Div("Veuillez entrer une requête valide.", style={'color': 'red'})
 
-    # Exécutez la recherche
     results = search_engine.search(query, n_documents=num_docs)
 
-    # Vérifiez si les résultats sont vides
     if results.empty:
         return html.Div(f"Aucun résultat trouvé pour : '{query}'.", style={'color': 'red'})
 
-    # Retournez les résultats sous forme de tableau HTML
     return html.Table([
         html.Thead(html.Tr([html.Th(col) for col in results.columns])),
         html.Tbody([
@@ -211,6 +229,18 @@ def perform_search(n_clicks, query, num_docs):
      Input('corpus-data-store', 'data')]
 )
 def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, corpus_data):
+    """
+    Callback to update the document list based on sorting or filtering actions.
+
+    Parameters:
+        sort_date_clicks (int): Number of clicks on the sort by date button.
+        sort_title_clicks (int): Number of clicks on the sort by title button.
+        by_author_clicks (int): Number of clicks on the filter by author button.
+        corpus_data (list): The list of documents loaded into the data store.
+
+    Returns:
+        html.Div: A list of formatted documents or a dropdown for author selection.
+    """
     if not corpus_data:
         return "Aucun document disponible. Veuillez charger les données."
     
@@ -240,7 +270,6 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
                 html.Div(id='author-documents')
             ])
 
-    # Mise en forme des documents en tableaux
     return html.Div([
         dbc.Card([
             dbc.CardBody([
@@ -273,6 +302,17 @@ def update_document_list(sort_date_clicks, sort_title_clicks, by_author_clicks, 
  ]
 )
 def update_author_documents(author, corpus_data):
+    """
+    Callback to filter and display documents by a selected author.
+
+    Parameters:
+        author (str): The selected author.
+        corpus_data (list): The list of documents loaded into the data store.
+
+    Returns:
+        html.Div: A list of formatted documents by the selected author.
+        str: A message if no documents are available or no author is selected.
+    """
     if not corpus_data:
         return "Aucun document disponible. Veuillez charger les données."
     
@@ -285,7 +325,6 @@ def update_author_documents(author, corpus_data):
     if author_docs.empty:
         return f"Aucun document trouvé pour l'auteur : {author}"
 
-    # Mise en forme des documents en cartes détaillées
     return html.Div([
         dbc.Card([
             dbc.CardBody([
