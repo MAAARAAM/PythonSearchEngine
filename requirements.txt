@@ -1,0 +1,9 @@
+pandas
+nltk
+matplotlib
+dash
+dash-bootstrap-components
+textblob
+wordcloud
+colorama
+tabulate
