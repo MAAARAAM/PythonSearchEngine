@@ -56,9 +56,10 @@ for index, row in combined_data.iterrows():
 search_engine = SearchEngine(corpus_v2)
 
 # Step 3: Define the Dash layout
-# Updated Dash layout
 app.layout = dbc.Container([
     dcc.Store(id='corpus-data-store'),
+
+    dbc.Row([], className="mb-5"),
 
     # Interface for Theme Selection
     dbc.Row([
@@ -112,10 +113,15 @@ app.layout = dbc.Container([
 
     dbc.Row([
         dbc.Col([
-            dbc.Button('Rechercher', id='search-button', color='primary', className='mt-3'),
-            html.Div(id='search-results-area', className='mt-4')
+            dbc.Button('Rechercher', id='search-button', color='primary', className='mt-3')
         ])
     ]),
+
+    # Separate containers for different results
+    dbc.Row([dbc.Col(html.Div(id='search-results-area', className='mt-4'))]),
+    dbc.Row([dbc.Col(html.Div(id='stats-results-area', className='mt-4'))]),
+    dbc.Row([dbc.Col(html.Div(id='wordcloud-results-area', className='mt-4'))]),
+    dbc.Row([dbc.Col(html.Div(id='sentiment-results-area', className='mt-4'))]),
 
     html.Hr(),
 
@@ -127,34 +133,22 @@ app.layout = dbc.Container([
             dbc.Button('Afficher les documents triés par date', id='sort-date-button', color='info', className='mx-2'),
             dbc.Button('Afficher les documents triés par titre', id='sort-title-button', color='info', className='mx-2'),
             dbc.Button('Afficher les documents par auteur', id='by-author-button', color='info', className='mx-2'),
-            html.Div(id='document-list', className='mt-4')
         ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
     dbc.Row([
         dbc.Col([
             dbc.Button('Statistiques', id='stats-button', color='info', className='mx-2'),
-            html.Div(id='stats-results-area', className='mt-4')
-        ])
-    ]),
-
-    dbc.Row([
-        dbc.Col([
             dbc.Button('Nuage de mots', id='wordcloud-button', color='info', className='mx-2'),
-            html.Div(id='wordcloud-results-area', className='mt-4')
-        ])
+            dbc.Button('Analyse sentimentale', id='sentiment-button', color='info', className='mx-2'),
+        ], width=12, className="d-flex justify-content-center mb-3")
     ]),
 
-    dbc.Row([
-        dbc.Col([
-            dbc.Button('Analyse sentimentale', id='sentiment-button', color='info', className='mx-2'),
-            html.Div(id='sentiment-results-area', className='mt-4')
-        ])
-    ]),
+    dbc.Row([dbc.Col(html.Div(id='document-list', className='mt-4'))]),
 
     dbc.Row([], className="mb-5")
-], fluid=True)
 
+], fluid=True)
 
 # Step 4: Define the callbacks
 @app.callback(
@@ -357,12 +351,10 @@ def display_wordcloud(n_clicks, corpus_data):
     img_buffer.seek(0)
     img_str = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
     return html.Div([
-        html.H3("Nuage de mots", className="text-center"),
-        html.Img(
-            src="data:image/png;base64,{}".format(img_str),
-            style={'width': '50%', 'display': 'block', 'margin': '0 auto'}
-        )
+        html.H3("Nuage de mots"),
+        html.Img(src="data:image/png;base64,{}".format(img_str), style={'width': '100%', 'height': 'auto'})
     ])
+
 
 @app.callback(
     Output('sentiment-results-area', 'children'),
