@@ -4,6 +4,7 @@ from Document import NewsAPIDocument, GuardianDocument
 from SearchEngine import SearchEngine
 import pandas as pd
 
+
 class TestCorpus(unittest.TestCase):
     def setUp(self):
         """
