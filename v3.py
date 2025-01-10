@@ -9,20 +9,19 @@ import io
 import base64
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-from dash.exceptions import PreventUpdate  # This import is essential to handle 'no update' case
-import re  # For regular expression handling in wordcloud generation
-from nltk.corpus import stopwords  # To filter out stopwords when generating word clouds
-from textblob import TextBlob  # For sentiment analysis (TextBlob library)
+from dash.exceptions import PreventUpdate 
+import re 
+from nltk.corpus import stopwords  
+from textblob import TextBlob 
 
 
-# Initialize Dash app with Bootstrap theme and suppress callback exceptions
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
     suppress_callback_exceptions=True
 )
 
-# Step 1: Initialize Corpus and Load Data
+#  1:initialiser le corpus
 corpus_v2 = Corpus_v2("MonCorpusV3")
 
 newsapi_data = corpus_v2.fetch_newsapi_data('deep learning', page_size=100)
@@ -52,16 +51,15 @@ for index, row in combined_data.iterrows():
         )
     corpus_v2.add_document(doc)
 
-# Step 2: Search Engine Initialization
+#  2: initialiser Search Engine 
 search_engine = SearchEngine(corpus_v2)
 
-# Step 3: Define the Dash layout
+#  3: definir layout dash
 app.layout = dbc.Container([
     dcc.Store(id='corpus-data-store'),
 
     dbc.Row([], className="mb-5"),
 
-    # Interface for Theme Selection
     dbc.Row([
         dbc.Col(html.H1("Interface de Recherche Avancée", className="text-center text-primary mb-4"), width=12)
     ]),
@@ -89,7 +87,7 @@ app.layout = dbc.Container([
 
     html.Hr(),
 
-    # Search Interface
+    # Interface de search
     dbc.Row([
         dbc.Col([
             html.Label("Requête:"),
@@ -121,7 +119,6 @@ app.layout = dbc.Container([
 
     html.Hr(),
 
-    # Additional Features
     dbc.Row([dbc.Col(html.H1("Moteur de Recherche de Corpus", className="text-center text-primary mb-4"), width=12)]),
 
     dbc.Row([
@@ -138,7 +135,6 @@ app.layout = dbc.Container([
 
 ], fluid=True)
 
-# Step 4: Define the callbacks
 @app.callback(
     [Output('corpus-data-store', 'data'),
      Output('data-loading-status', 'children')],
@@ -160,7 +156,6 @@ def load_data(n_clicks, theme):
     if not theme:
         return None, html.Div("Veuillez entrer un thème valide pour charger les données.", style={'color': 'red'})
 
-    # Simuler un chargement de données
     newsapi_data = corpus_v2.fetch_newsapi_data(theme, page_size=100)
     newsapi_data['type'] = 'newsapi'
 
@@ -180,12 +175,12 @@ def load_data(n_clicks, theme):
             'type': row['type']
         })
     
-    print("Documents chargés:", documents)  # Pour déboguer
+    print("Documents chargés:", documents)  
 
     return documents, html.Div(f"Données chargées avec succès pour le thème : '{theme}'.", style={'color': 'green'})
 
 @app.callback(
-    Output('search-results-area', 'children'),  # ID correct
+    Output('search-results-area', 'children'),  
     Input('search-button', 'n_clicks'),
     State('query-input', 'value'),
     State('num-docs-slider', 'value')
@@ -349,6 +344,5 @@ def update_author_documents(author, corpus_data):
         for _, row in author_docs.iterrows()
     ])
 
-# Step 5: Run the Dash app
 if __name__ == "__main__":
     app.run_server(debug=True)

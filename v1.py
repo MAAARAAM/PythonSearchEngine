@@ -116,7 +116,7 @@ def interactive_menu(loaded_corpus):
     Args:
         loaded_corpus (Corpus): The loaded corpus object.
     """
-    authors = get_authors(loaded_corpus)  # Obtenez les auteurs du corpus
+    authors = get_authors(loaded_corpus) 
 
     while True:
         print(Fore.MAGENTA + "\nMenu :")
@@ -124,7 +124,7 @@ def interactive_menu(loaded_corpus):
         print(Fore.CYAN + "2. Afficher les documents triés par titre")
         print(Fore.CYAN + "3. Afficher les documents de NewsAPI")
         print(Fore.CYAN + "4. Afficher les documents de The Guardian")
-        print(Fore.CYAN + "5. Afficher les documents par auteur")  # Nouvelle option
+        print(Fore.CYAN + "5. Afficher les documents par auteur")
         print(Fore.CYAN + "6. Quitter")
         choix = input(Fore.GREEN + "Votre choix (1/2/3/4/5/6) : ")
 
