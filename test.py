@@ -52,6 +52,7 @@ class TestCorpus(unittest.TestCase):
                 )
             self.corpus_v1.add_document(doc)
             self.corpus_v2.add_document(doc)
+            
 
     def test_add_document(self):
         """
