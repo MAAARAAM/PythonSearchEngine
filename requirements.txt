@@ -8,3 +8,5 @@ wordcloud
 pytest
 scipy
 tabulate
+stopwords 
+nltk
